@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -13,6 +13,11 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'role', required: false, enum: UserRole })
+  @ApiQuery({ name: 'status', required: false, enum: UserStatus })
   findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
@@ -54,7 +59,23 @@ export class UsersController {
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update user status' })
   @ApiResponse({ status: 200, description: 'User status updated successfully' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: Object.values(UserStatus),
+          description: 'User status',
+        },
+      },
+      required: ['status'],
+    },
+  })
   updateStatus(@Param('id') id: string, @Body('status') status: UserStatus) {
+    if (!status || !Object.values(UserStatus).includes(status)) {
+      throw new BadRequestException('Invalid status value');
+    }
     return this.usersService.updateStatus(+id, status);
   }
 } 

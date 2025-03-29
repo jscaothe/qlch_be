@@ -1,5 +1,7 @@
 import { Entity, PrimaryKey, Property, Enum } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsPhoneNumber } from 'class-validator';
+import { IsVietnamesePhoneNumber } from 'src/common/validators/phone.validator';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -27,6 +29,7 @@ export class User {
   email!: string;
 
   @Property()
+  @IsVietnamesePhoneNumber()
   @ApiProperty()
   phone!: string;
 

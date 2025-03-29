@@ -3,7 +3,8 @@ import { UsersController } from '../users.controller';
 import { UsersService } from '../users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserRole, UserStatus } from '../entities/user.entity';
+import { User, UserRole, UserStatus } from '../entities/user.entity';
+import { BadRequestException } from '@nestjs/common';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -31,6 +32,9 @@ describe('UsersController', () => {
 
     controller = module.get<UsersController>(UsersController);
     service = module.get<UsersService>(UsersService);
+    
+    // Reset all mocks before each test
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -38,7 +42,7 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('should return paginated users', async () => {
+    it('should return paginated users with all parameters', async () => {
       const mockResult = {
         users: [
           { id: 1, name: 'User 1' },
@@ -55,6 +59,120 @@ describe('UsersController', () => {
       const result = await controller.findAll(1, 10, 'search', UserRole.STAFF, UserStatus.ACTIVE);
 
       expect(service.findAll).toHaveBeenCalledWith(1, 10, 'search', UserRole.STAFF, UserStatus.ACTIVE);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return paginated users with only pagination parameters', async () => {
+      const mockResult = {
+        users: [
+          { id: 1, name: 'User 1' },
+          { id: 2, name: 'User 2' },
+        ],
+        total: 2,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
+
+      mockUsersService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(1, 10);
+
+      expect(service.findAll).toHaveBeenCalledWith(1, 10, undefined, undefined, undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return paginated users with only search parameter', async () => {
+      const mockResult = {
+        users: [
+          { id: 1, name: 'User 1' },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
+
+      mockUsersService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(undefined, undefined, 'search');
+
+      expect(service.findAll).toHaveBeenCalledWith(undefined, undefined, 'search', undefined, undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return paginated users with only role parameter', async () => {
+      const mockResult = {
+        users: [
+          { id: 1, name: 'User 1', role: UserRole.STAFF },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
+
+      mockUsersService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(undefined, undefined, undefined, UserRole.STAFF);
+
+      expect(service.findAll).toHaveBeenCalledWith(undefined, undefined, undefined, UserRole.STAFF, undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return paginated users with only status parameter', async () => {
+      const mockResult = {
+        users: [
+          { id: 1, name: 'User 1', status: UserStatus.ACTIVE },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      };
+
+      mockUsersService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(undefined, undefined, undefined, undefined, UserStatus.ACTIVE);
+
+      expect(service.findAll).toHaveBeenCalledWith(undefined, undefined, undefined, undefined, UserStatus.ACTIVE);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return empty result when no users found', async () => {
+      const mockResult = {
+        users: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      };
+
+      mockUsersService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(1, 10);
+
+      expect(service.findAll).toHaveBeenCalledWith(1, 10, undefined, undefined, undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should handle pagination correctly', async () => {
+      const mockResult = {
+        users: [
+          { id: 11, name: 'User 11' },
+          { id: 12, name: 'User 12' },
+        ],
+        total: 12,
+        page: 2,
+        limit: 10,
+        totalPages: 2,
+      };
+
+      mockUsersService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(2, 10);
+
+      expect(service.findAll).toHaveBeenCalledWith(2, 10, undefined, undefined, undefined);
       expect(result).toEqual(mockResult);
     });
   });
@@ -95,6 +213,7 @@ describe('UsersController', () => {
     it('should update a user', async () => {
       const updateUserDto: UpdateUserDto = {
         name: 'Updated Name',
+        phone: '1234567890',
       };
 
       const mockUser = { id: 1, name: 'Updated Name' };
@@ -120,7 +239,7 @@ describe('UsersController', () => {
   });
 
   describe('updateStatus', () => {
-    it('should update user status', async () => {
+    it('should update user status with valid status', async () => {
       const mockUser = { id: 1, name: 'User 1', status: UserStatus.INACTIVE };
       mockUsersService.updateStatus.mockResolvedValue(mockUser);
 
@@ -128,6 +247,28 @@ describe('UsersController', () => {
 
       expect(service.updateStatus).toHaveBeenCalledWith(1, UserStatus.INACTIVE);
       expect(result).toEqual(mockUser);
+    });
+
+    it('should throw BadRequestException when status is invalid', async () => {
+      try {
+        await controller.updateStatus('1', 'INVALID_STATUS' as UserStatus);
+        fail('Should have thrown BadRequestException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect(error.message).toBe('Invalid status value');
+      }
+      expect(service.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when status is not provided', async () => {
+      try {
+        await controller.updateStatus('1', undefined as unknown as UserStatus);
+        fail('Should have thrown BadRequestException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect(error.message).toBe('Invalid status value');
+      }
+      expect(service.updateStatus).not.toHaveBeenCalled();
     });
   });
 }); 

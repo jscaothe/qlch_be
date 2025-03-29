@@ -1,19 +1,19 @@
 import { IsString, IsEmail, IsNotEmpty } from 'class-validator';
 
-export class UpdateBuildingInfoDto {
+export class UpdateBuildingDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  buildingName!: string;
 
   @IsString()
   @IsNotEmpty()
-  address: string;
+  buildingAddress!: string;
 
   @IsString()
   @IsNotEmpty()
-  phone: string;
+  buildingPhone!: string;
 
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  buildingEmail!: string;
 } 

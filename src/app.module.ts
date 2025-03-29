@@ -22,6 +22,10 @@ import { FinancesModule } from './modules/finances/finances.module';
       password: process.env.DB_PASSWORD || 'postgres',
       entities: ['./dist/**/*.entity.js'],
       entitiesTs: ['./src/**/*.entity.ts'],
+      migrations: {
+        path: './dist/migrations',
+        pathTs: './src/migrations',
+      },
       debug: process.env.NODE_ENV !== 'production',
       discovery: {
         warnWhenNoEntities: false,

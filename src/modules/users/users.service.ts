@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, FilterQuery, EntityManager } from '@mikro-orm/core';
 import { User, UserRole, UserStatus } from './entities/user.entity';
@@ -15,93 +15,151 @@ export class UsersService {
   ) {}
 
   async findAll(page = 1, limit = 10, search?: string, role?: UserRole, status?: UserStatus) {
-    const offset = (page - 1) * limit;
-    const where: FilterQuery<User> = {};
+    try {
+      const offset = (page - 1) * limit;
+      const where: FilterQuery<User> = {};
 
-    if (search) {
-      where.$or = [
-        { name: { $like: `%${search}%` } },
-        { email: { $like: `%${search}%` } },
-        { phone: { $like: `%${search}%` } },
-      ];
+      if (search) {
+        where.$or = [
+          { name: { $like: `%${search}%` } },
+          { email: { $like: `%${search}%` } },
+          { phone: { $like: `%${search}%` } },
+        ];
+      }
+
+      if (role) {
+        where.role = role;
+      }
+
+      if (status) {
+        where.status = status;
+      }
+
+      const [users, total] = await this.userRepository.findAndCount(where, {
+        offset,
+        limit,
+      });
+
+      return {
+        users,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw new InternalServerErrorException('Failed to fetch users');
     }
-
-    if (role) {
-      where.role = role;
-    }
-
-    if (status) {
-      where.status = status;
-    }
-
-    const [users, total] = await this.userRepository.findAndCount(where, {
-      offset,
-      limit,
-    });
-
-    return {
-      users,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
   }
 
   async findOne(id: number) {
-    const user = await this.userRepository.findOne({ id });
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+    try {
+      const user = await this.userRepository.findOne({ id });
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Error in findOne:', error);
+      throw new InternalServerErrorException('Failed to fetch user');
     }
-    return user;
   }
 
   async create(createUserDto: CreateUserDto) {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const user = this.userRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-    await this.em.persistAndFlush(user);
-    return user;
+    try {
+      const existingUser = await this.userRepository.findOne({ email: createUserDto.email });
+      if (existingUser) {
+        throw new BadRequestException('Email already exists');
+      }
+
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+      const user = this.userRepository.create({
+        ...createUserDto,
+        password: hashedPassword,
+        phone: createUserDto.phone,
+      });
+      await this.em.persistAndFlush(user);
+      return user;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('Error in create:', error);
+      throw new InternalServerErrorException('Failed to create user');
+    }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.findOne(id);
-    
-    if (updateUserDto.name) {
-      user.name = updateUserDto.name;
-    }
-    if (updateUserDto.email) {
-      user.email = updateUserDto.email;
-    }
-    if (updateUserDto.phone) {
-      user.phone = updateUserDto.phone;
-    }
-    if (updateUserDto.role) {
-      user.role = updateUserDto.role as UserRole;
-    }
-    if (updateUserDto.status) {
-      user.status = updateUserDto.status as UserStatus;
-    }
-    if (updateUserDto.password) {
-      user.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
+    try {
+      const user = await this.findOne(id);
+      
+      if (updateUserDto.email && updateUserDto.email !== user.email) {
+        const existingUser = await this.userRepository.findOne({ email: updateUserDto.email });
+        if (existingUser) {
+          throw new BadRequestException('Email already exists');
+        }
+      }
 
-    await this.em.flush();
-    return user;
+      if (updateUserDto.name) {
+        user.name = updateUserDto.name;
+      }
+      if (updateUserDto.email) {
+        user.email = updateUserDto.email;
+      }
+      if (updateUserDto.phone) {
+        user.phone = updateUserDto.phone;
+      }
+      if (updateUserDto.role) {
+        user.role = updateUserDto.role as UserRole;
+      }
+      if (updateUserDto.status) {
+        user.status = updateUserDto.status as UserStatus;
+      }
+      if (updateUserDto.password) {
+        user.password = await bcrypt.hash(updateUserDto.password, 10);
+      }
+
+      await this.em.flush();
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('Error in update:', error);
+      throw new InternalServerErrorException('Failed to update user');
+    }
   }
 
   async remove(id: number) {
-    const user = await this.findOne(id);
-    await this.em.removeAndFlush(user);
-    return { message: 'User deleted successfully' };
+    try {
+      const user = await this.findOne(id);
+      await this.em.removeAndFlush(user);
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Error in remove:', error);
+      throw new InternalServerErrorException('Failed to delete user');
+    }
   }
 
   async updateStatus(id: number, status: UserStatus) {
-    const user = await this.findOne(id);
-    user.status = status;
-    await this.em.flush();
-    return user;
+    try {
+      const user = await this.findOne(id);
+      user.status = status;
+      await this.em.flush();
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Error in updateStatus:', error);
+      throw new InternalServerErrorException('Failed to update user status');
+    }
   }
 } 

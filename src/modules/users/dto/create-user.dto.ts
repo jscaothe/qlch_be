@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsNumber, IsString, MinLength, Matches, IsPhoneNumber } from 'class-validator';
 import { UserRole, UserStatus } from '../entities/user.entity';
+import { IsVietnamesePhoneNumber } from 'src/common/validators/phone.validator';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -12,11 +13,14 @@ export class CreateUserDto {
   @ApiProperty()
   @IsEmail()
   @IsNotEmpty()
+  @Matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, {
+    message: 'Email không hợp lệ',
+  })
   email!: string;
 
   @ApiProperty()
-  @IsPhoneNumber()
   @IsNotEmpty()
+  @IsVietnamesePhoneNumber()
   phone!: string;
 
   @ApiProperty({ enum: UserRole })
