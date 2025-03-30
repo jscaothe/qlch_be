@@ -6,6 +6,7 @@ import { CreateRoomDto } from '../dto/create-room.dto';
 import { NotFoundException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { RoomStatus } from '../enums/room-status.enum';
+import { RoomType } from '../../settings/entities/room-type.entity';
 
 describe('RoomsService', () => {
   let service: RoomsService;
@@ -18,16 +19,21 @@ describe('RoomsService', () => {
     persistAndFlush: jest.fn(),
     removeAndFlush: jest.fn(),
     count: jest.fn(),
+    assign: jest.fn(),
   };
 
-  const mockRoom: Room = {
-    id: uuidv4(),
-    name: 'Test Room',
-    type: 'Standard',
+  const mockRoom = {
+    id: '1',
+    name: 'Room 101',
+    roomType: { id: '1', name: 'Standard' },
     floor: 1,
-    area: 20,
-    price: 1000,
+    area: 50,
+    price: 1000000,
     status: RoomStatus.VACANT,
+    description: 'Standard room',
+    amenities: ['AC', 'TV'],
+    images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
+    videos: ['https://example.com/video1.mp4', 'https://example.com/video2.mp4'],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -61,9 +67,16 @@ describe('RoomsService', () => {
         {
           id: '1',
           name: 'Room 1',
-          type: 'Standard',
+          roomType: {
+            id: '1',
+            name: 'Standard',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
           price: 1000,
-          status: 'vacant' as RoomStatus,
+          status: RoomStatus.VACANT,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
 
@@ -90,9 +103,16 @@ describe('RoomsService', () => {
         {
           id: '1',
           name: 'Room 1',
-          type: 'Standard',
+          roomType: {
+            id: '1',
+            name: 'Standard',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
           price: 1000,
-          status: 'vacant' as RoomStatus,
+          status: RoomStatus.VACANT,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
 
@@ -110,7 +130,7 @@ describe('RoomsService', () => {
       expect(em.find).toHaveBeenCalledWith(Room, {
         $or: [
           { name: { $like: '%Test%' } },
-          { type: { $like: '%Test%' } },
+          { 'roomType.name': { $like: '%Test%' } },
         ],
       }, {
         limit: 10,
@@ -119,7 +139,7 @@ describe('RoomsService', () => {
       expect(em.count).toHaveBeenCalledWith(Room, {
         $or: [
           { name: { $like: '%Test%' } },
-          { type: { $like: '%Test%' } },
+          { 'roomType.name': { $like: '%Test%' } },
         ],
       });
     });
@@ -130,9 +150,16 @@ describe('RoomsService', () => {
       const mockRoom = {
         id: '1',
         name: 'Room 1',
-        type: 'Standard',
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         price: 1000,
-        status: 'vacant' as RoomStatus,
+        status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       mockEntityManager.findOne.mockResolvedValue(mockRoom);
@@ -148,24 +175,71 @@ describe('RoomsService', () => {
     it('should create a new room', async () => {
       const createRoomDto: CreateRoomDto = {
         name: 'Room 1',
-        type: 'Standard',
+        roomTypeId: '1',
         price: 1000,
-        status: 'vacant' as RoomStatus,
+        status: RoomStatus.VACANT,
+        floor: 1,
+        area: 50,
+        description: 'Standard room',
+        images: ['https://example.com/image1.jpg'],
+        videos: ['https://example.com/video1.mp4'],
+      };
+
+      const mockRoomType = {
+        id: '1',
+        name: 'Standard',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const mockRoom = {
-        id: '1',
-        ...createRoomDto,
+        id: expect.any(String),
+        name: 'Room 1',
+        roomType: mockRoomType,
+        price: 1000,
+        status: RoomStatus.VACANT,
+        floor: 1,
+        area: 50,
+        description: 'Standard room',
+        images: ['https://example.com/image1.jpg'],
+        videos: ['https://example.com/video1.mp4'],
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       };
 
+      mockEntityManager.findOne.mockResolvedValue(mockRoomType);
       mockEntityManager.create.mockReturnValue(mockRoom);
       mockEntityManager.persistAndFlush.mockResolvedValue(undefined);
 
       const result = await service.create(createRoomDto);
 
       expect(result).toEqual(mockRoom);
-      expect(em.create).toHaveBeenCalledWith(Room, createRoomDto);
+      expect(em.findOne).toHaveBeenCalledWith(RoomType, { id: createRoomDto.roomTypeId });
+      expect(em.create).toHaveBeenCalledWith(Room, {
+        id: expect.any(String),
+        ...createRoomDto,
+        roomType: mockRoomType,
+      });
       expect(em.persistAndFlush).toHaveBeenCalledWith(mockRoom);
+    });
+
+    it('should throw NotFoundException when room type not found', async () => {
+      const createRoomDto: CreateRoomDto = {
+        name: 'Room 1',
+        roomTypeId: '1',
+        price: 1000,
+        status: RoomStatus.VACANT,
+        floor: 1,
+        area: 50,
+        description: 'Standard room',
+        images: ['https://example.com/image1.jpg'],
+        videos: ['https://example.com/video1.mp4'],
+      };
+
+      mockEntityManager.findOne.mockResolvedValue(null);
+
+      await expect(service.create(createRoomDto)).rejects.toThrow(NotFoundException);
+      expect(em.findOne).toHaveBeenCalledWith(RoomType, { id: createRoomDto.roomTypeId });
     });
   });
 
@@ -173,27 +247,92 @@ describe('RoomsService', () => {
     it('should update a room', async () => {
       const updateRoomDto: Partial<CreateRoomDto> = {
         price: 2000,
+        roomTypeId: '2',
       };
 
       const mockRoom = {
         id: '1',
         name: 'Room 1',
-        type: 'Standard',
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         price: 1000,
-        status: 'vacant' as RoomStatus,
+        status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockEntityManager.findOne.mockResolvedValue(mockRoom);
+      const mockRoomType = {
+        id: '2',
+        name: 'Deluxe',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const updatedRoom = {
+        ...mockRoom,
+        price: 2000,
+        roomType: mockRoomType,
+      };
+
+      mockEntityManager.findOne
+        .mockResolvedValueOnce(mockRoom)
+        .mockResolvedValueOnce(mockRoomType);
       mockEntityManager.persistAndFlush.mockResolvedValue(undefined);
 
       const result = await service.update('1', updateRoomDto);
 
-      expect(result).toEqual({ ...mockRoom, ...updateRoomDto });
+      expect(result).toEqual(updatedRoom);
       expect(em.findOne).toHaveBeenCalledWith(Room, { id: '1' });
-      expect(em.persistAndFlush).toHaveBeenCalledWith({
-        ...mockRoom,
-        ...updateRoomDto,
-      });
+      expect(em.findOne).toHaveBeenCalledWith(RoomType, { id: updateRoomDto.roomTypeId });
+      expect(em.persistAndFlush).toHaveBeenCalledWith(expect.objectContaining({
+        price: 2000,
+        roomType: mockRoomType,
+      }));
+    });
+
+    it('should throw NotFoundException when room is not found', async () => {
+      const updateRoomDto: Partial<CreateRoomDto> = {
+        price: 2000,
+      };
+
+      mockEntityManager.findOne.mockResolvedValue(null);
+
+      await expect(service.update('1', updateRoomDto)).rejects.toThrow(NotFoundException);
+      expect(em.findOne).toHaveBeenCalledWith(Room, { id: '1' });
+    });
+
+    it('should throw NotFoundException when room type is not found', async () => {
+      const updateRoomDto: Partial<CreateRoomDto> = {
+        price: 2000,
+        roomTypeId: '2',
+      };
+
+      const mockRoom = {
+        id: '1',
+        name: 'Room 1',
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        price: 1000,
+        status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockEntityManager.findOne
+        .mockResolvedValueOnce(mockRoom)
+        .mockResolvedValueOnce(null);
+
+      await expect(service.update('1', updateRoomDto)).rejects.toThrow(NotFoundException);
+      expect(em.findOne).toHaveBeenCalledWith(Room, { id: '1' });
+      expect(em.findOne).toHaveBeenCalledWith(RoomType, { id: updateRoomDto.roomTypeId });
     });
   });
 
@@ -202,18 +341,33 @@ describe('RoomsService', () => {
       const mockRoom = {
         id: '1',
         name: 'Room 1',
-        type: 'Standard',
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         price: 1000,
-        status: 'vacant' as RoomStatus,
+        status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       mockEntityManager.findOne.mockResolvedValue(mockRoom);
       mockEntityManager.removeAndFlush.mockResolvedValue(undefined);
 
-      await service.remove('1');
+      const result = await service.remove('1');
 
+      expect(result).toEqual(mockRoom);
       expect(em.findOne).toHaveBeenCalledWith(Room, { id: '1' });
       expect(em.removeAndFlush).toHaveBeenCalledWith(mockRoom);
+    });
+
+    it('should throw NotFoundException when room is not found', async () => {
+      mockEntityManager.findOne.mockResolvedValue(null);
+
+      await expect(service.remove('1')).rejects.toThrow(NotFoundException);
+      expect(em.findOne).toHaveBeenCalledWith(Room, { id: '1' });
     });
   });
 

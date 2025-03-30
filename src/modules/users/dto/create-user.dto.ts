@@ -19,8 +19,8 @@ export class CreateUserDto {
   email!: string;
 
   @ApiProperty()
+  @IsPhoneNumber()
   @IsNotEmpty()
-  @IsVietnamesePhoneNumber()
   phone!: string;
 
   @ApiProperty({ enum: UserRole })

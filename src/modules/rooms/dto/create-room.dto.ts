@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsEnum, IsArray } from 'class-validator';
 import { RoomStatus } from '../enums/room-status.enum';
 
 export class CreateRoomDto {
@@ -6,7 +6,7 @@ export class CreateRoomDto {
   name: string;
 
   @IsString()
-  type: string;
+  roomTypeId: string;
 
   @IsNumber()
   price: number;
@@ -25,4 +25,14 @@ export class CreateRoomDto {
   @IsNumber()
   @IsOptional()
   area?: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  images?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  videos?: string[];
 } 

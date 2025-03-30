@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional, IsPhoneNumber, IsString, MinLength, Matches, IsNumber } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength, Matches, IsNumber } from 'class-validator';
 import { UserRole, UserStatus } from '../entities/user.entity';
-import { IsVietnamesePhoneNumber } from 'src/common/validators/phone.validator';
+import { IsVietnamesePhoneNumber } from '../../../common/validators/phone.validator';
 
 export class UpdateUserDto {
   @ApiProperty({ required: false })
@@ -23,22 +23,22 @@ export class UpdateUserDto {
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ enum: UserRole, required: false })
+  @ApiProperty({ required: false })
+  @IsString()
+  @MinLength(6)
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message: 'Password too weak',
+  })
+  @IsOptional()
+  password?: string;
+
+  @ApiProperty({ required: false, enum: UserRole })
   @IsEnum(UserRole)
   @IsOptional()
   role?: UserRole;
 
-  @ApiProperty({ enum: UserStatus, required: false })
+  @ApiProperty({ required: false, enum: UserStatus })
   @IsEnum(UserStatus)
   @IsOptional()
   status?: UserStatus;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  @MinLength(6)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, {
-    message: 'Mật khẩu phải chứa ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
-  })
-  password?: string;
 } 

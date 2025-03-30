@@ -9,9 +9,9 @@ describe('RoomsController', () => {
   let service: RoomsService;
 
   const mockRoomsService = {
+    create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
-    create: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   };
@@ -31,33 +31,44 @@ describe('RoomsController', () => {
     service = module.get<RoomsService>(RoomsService);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
   describe('findAll', () => {
     it('should return an array of rooms', async () => {
-      const mockRooms = [
-        {
-          id: '1',
-          name: 'Room 101',
-          type: 'Standard',
-          price: 1000,
-          status: RoomStatus.VACANT,
-        },
-      ];
       const result = {
-        data: mockRooms,
+        data: [
+          {
+            id: '1',
+            name: 'Room 1',
+            roomType: {
+              id: '1',
+              name: 'Standard',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            price: 1000,
+            status: RoomStatus.VACANT,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
         meta: {
-          hasMore: false,
           page: 1,
           limit: 10,
+          hasMore: false,
         },
       };
+
       mockRoomsService.findAll.mockResolvedValue(result);
 
-      expect(await controller.findAll(1, 10)).toBe(result);
-      expect(service.findAll).toHaveBeenCalledWith(1, 10, undefined, undefined);
+      expect(await controller.findAll(1, 10, 'Room')).toBe(result);
+      expect(service.findAll).toHaveBeenCalledWith(1, 10, 'Room', undefined);
     });
 
     it('should return filtered rooms when search is provided', async () => {
@@ -65,9 +76,16 @@ describe('RoomsController', () => {
         {
           id: '1',
           name: 'Room 101',
-          type: 'Standard',
+          roomType: {
+            id: '1',
+            name: 'Standard',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
           price: 1000,
           status: RoomStatus.VACANT,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
       const result = {
@@ -86,38 +104,59 @@ describe('RoomsController', () => {
   });
 
   describe('findOne', () => {
-    it('should return a single room', async () => {
-      const mockRoom = {
+    it('should return a room', async () => {
+      const result = {
         id: '1',
-        name: 'Room 101',
-        type: 'Standard',
+        name: 'Room 1',
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         price: 1000,
         status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      mockRoomsService.findOne.mockResolvedValue(mockRoom);
 
-      expect(await controller.findOne('1')).toBe(mockRoom);
+      mockRoomsService.findOne.mockResolvedValue(result);
+
+      expect(await controller.findOne('1')).toBe(result);
       expect(service.findOne).toHaveBeenCalledWith('1');
     });
   });
 
   describe('create', () => {
-    it('should create a new room', async () => {
+    it('should create a room', async () => {
       const createRoomDto: CreateRoomDto = {
-        name: 'Room 101',
-        type: 'Standard',
+        name: 'Room 1',
+        roomTypeId: '1',
         price: 1000,
         status: RoomStatus.VACANT,
+        floor: 1,
+        area: 50,
+        description: 'Standard room',
+        images: ['https://example.com/image1.jpg'],
+        videos: ['https://example.com/video1.mp4'],
       };
 
-      const mockRoom = {
+      const result = {
         id: '1',
         ...createRoomDto,
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockRoomsService.create.mockResolvedValue(mockRoom);
+      mockRoomsService.create.mockResolvedValue(result);
 
-      expect(await controller.create(createRoomDto)).toBe(mockRoom);
+      expect(await controller.create(createRoomDto)).toBe(result);
       expect(service.create).toHaveBeenCalledWith(createRoomDto);
     });
   });
@@ -125,32 +164,53 @@ describe('RoomsController', () => {
   describe('update', () => {
     it('should update a room', async () => {
       const updateRoomDto: Partial<CreateRoomDto> = {
-        name: 'Room 101 Updated',
+        price: 2000,
+        roomTypeId: '2',
       };
 
-      const mockRoom = {
+      const result = {
         id: '1',
-        name: 'Room 101',
-        type: 'Standard',
-        price: 1000,
+        name: 'Room 1',
+        roomType: {
+          id: '2',
+          name: 'Deluxe',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        price: 2000,
         status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      mockRoomsService.update.mockResolvedValue(mockRoom);
+      mockRoomsService.update.mockResolvedValue(result);
 
-      expect(await controller.update('1', updateRoomDto)).toBe(mockRoom);
+      expect(await controller.update('1', updateRoomDto)).toBe(result);
       expect(service.update).toHaveBeenCalledWith('1', updateRoomDto);
     });
   });
 
   describe('remove', () => {
     it('should remove a room', async () => {
-      mockRoomsService.remove.mockResolvedValue(undefined);
+      const result = {
+        id: '1',
+        name: 'Room 1',
+        roomType: {
+          id: '1',
+          name: 'Standard',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        price: 1000,
+        status: RoomStatus.VACANT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-      const result = await controller.remove('1');
-      
+      mockRoomsService.remove.mockResolvedValue(result);
+
+      expect(await controller.remove('1')).toBe(result);
       expect(service.remove).toHaveBeenCalledWith('1');
-      expect(result).toEqual({ message: 'Room deleted successfully' });
     });
   });
 }); 

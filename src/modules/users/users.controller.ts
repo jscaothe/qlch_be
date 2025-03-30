@@ -12,7 +12,30 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'Return all users' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Return all users',
+    schema: {
+      example: {
+        users: [
+          {
+            id: 1,
+            name: "Nguyễn Văn A",
+            email: "nguyenvana@example.com",
+            phone: "0901234567",
+            role: "admin",
+            status: "active",
+            createdAt: "2024-03-20T10:00:00Z",
+            updatedAt: "2024-03-20T10:00:00Z"
+          }
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      }
+    }
+  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
@@ -30,35 +53,93 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by id' })
-  @ApiResponse({ status: 200, description: 'Return user by id' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Return user by id',
+    schema: {
+      example: {
+        id: 1,
+        name: "Nguyễn Văn A",
+        email: "nguyenvana@example.com",
+        phone: "0901234567",
+        role: "admin",
+        status: "active",
+        createdAt: "2024-03-20T10:00:00Z",
+        updatedAt: "2024-03-20T10:00:00Z"
+      }
+    }
+  })
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create new user' })
-  @ApiResponse({ status: 201, description: 'User created successfully' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'User created successfully',
+    schema: {
+      example: {
+        name: "Nguyễn Văn B",
+        email: "nguyenvanb@example.com",
+        phone: "0901234568",
+        password: "password123",
+        role: "staff",
+        status: "active"
+      }
+    }
+  })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update user' })
-  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User updated successfully',
+    schema: {
+      example: {
+        name: "Nguyễn Văn B",
+        email: "nguyenvanb@example.com",
+        phone: "0901234568",
+        role: "staff",
+        status: "active"
+      }
+    }
+  })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete user' })
-  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User deleted successfully',
+    schema: {
+      example: {
+        message: "User deleted successfully"
+      }
+    }
+  })
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update user status' })
-  @ApiResponse({ status: 200, description: 'User status updated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User status updated successfully',
+    schema: {
+      example: {
+        id: 1,
+        status: "inactive",
+        updatedAt: "2024-03-20T10:00:00Z"
+      }
+    }
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -67,6 +148,7 @@ export class UsersController {
           type: 'string',
           enum: Object.values(UserStatus),
           description: 'User status',
+          example: 'inactive'
         },
       },
       required: ['status'],

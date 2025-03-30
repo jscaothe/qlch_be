@@ -32,7 +32,12 @@ describe('TenantsController', () => {
     room: {
       id: uuidv4(),
       name: 'Test Room',
-      type: 'Standard',
+      roomType: {
+        id: '1',
+        name: 'Standard',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
       floor: 1,
       area: 20,
       price: 1000,
@@ -41,6 +46,20 @@ describe('TenantsController', () => {
       updatedAt: new Date(),
     },
     status: TenantStatus.ACTIVE,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockRoom = {
+    id: '1',
+    name: 'Room 101',
+    roomType: { id: '1', name: 'Standard' },
+    floor: 1,
+    area: 50,
+    price: 1000000,
+    status: RoomStatus.VACANT,
+    description: 'Standard room',
+    amenities: ['AC', 'TV'],
     createdAt: new Date(),
     updatedAt: new Date(),
   };

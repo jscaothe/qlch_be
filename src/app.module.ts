@@ -7,6 +7,8 @@ import { RoomsModule } from './modules/rooms/rooms.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
 import { FinancesModule } from './modules/finances/finances.module';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { FinancesModule } from './modules/finances/finances.module';
     TenantsModule,
     ContractsModule,
     FinancesModule,
+    MaintenanceModule,
+    SettingsModule,
   ],
 })
 export class AppModule {} 

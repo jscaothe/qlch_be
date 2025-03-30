@@ -181,8 +181,79 @@
           "length": 255,
           "mappedType": "string"
         },
-        "type": {
-          "name": "type",
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        }
+      },
+      "name": "room_type",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "room_type_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "room_type_id": {
+          "name": "room_type_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -247,6 +318,24 @@
           "nullable": true,
           "mappedType": "array"
         },
+        "images": {
+          "name": "images",
+          "type": "text[]",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "array"
+        },
+        "videos": {
+          "name": "videos",
+          "type": "text[]",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "array"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz",
@@ -283,7 +372,20 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "room_room_type_id_foreign": {
+          "constraintName": "room_room_type_id_foreign",
+          "columnNames": [
+            "room_type_id"
+          ],
+          "localTableName": "public.room",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.room_type",
+          "updateRule": "cascade"
+        }
+      },
       "nativeEnums": {}
     },
     {

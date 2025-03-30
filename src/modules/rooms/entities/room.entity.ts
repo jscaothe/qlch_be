@@ -1,6 +1,7 @@
-import { Entity, Property, PrimaryKey } from '@mikro-orm/core';
+import { Entity, Property, PrimaryKey, ManyToOne } from '@mikro-orm/core';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { RoomStatus } from '../enums/room-status.enum';
+import { RoomType } from '../../settings/entities/room-type.entity';
 
 @Entity()
 export class Room extends BaseEntity {
@@ -10,8 +11,8 @@ export class Room extends BaseEntity {
   @Property()
   name: string;
 
-  @Property()
-  type: string;
+  @ManyToOne(() => RoomType)
+  roomType: RoomType;
 
   @Property({ nullable: true })
   floor?: number;
@@ -30,6 +31,12 @@ export class Room extends BaseEntity {
 
   @Property({ type: 'array', nullable: true })
   amenities?: string[];
+
+  @Property({ type: 'array', nullable: true })
+  images?: string[];
+
+  @Property({ type: 'array', nullable: true })
+  videos?: string[];
 
   @Property()
   createdAt: Date = new Date();
