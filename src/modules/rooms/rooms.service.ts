@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
 import { Room } from './entities/room.entity';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { UpdateRoomDto } from './dto/update-room.dto';
 import { RoomStatus } from './enums/room-status.enum';
 import { RoomType } from '../settings/entities/room-type.entity';
 import { v4 as uuidv4 } from 'uuid';
@@ -67,7 +68,7 @@ export class RoomsService {
     return room;
   }
 
-  async update(id: string, updateRoomDto: Partial<CreateRoomDto>) {
+  async update(id: string, updateRoomDto: UpdateRoomDto) {
     const room = await this.findOne(id);
     let roomType = room.roomType;
 
