@@ -1,0 +1,50 @@
+name: バグ報告
+description: バグ報告はこちら
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: |
+        不具合の概要を記載してください。
+        見た目に関係する場合は、スクリーンショット等を貼り付けてください。
+      placeholder: 不具合の概要を入力してください
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: 再現環境
+      description: 再現環境を記載してください。
+      placeholder: |
+        例：
+        Chrome + Windows
+        Edge + Windows
+        Chrome + macOS
+        Safari + macOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: 不具合を再現させる手順を記載してください。
+      value: |
+        1. 
+        2. 
+        3. 
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足
+      description: その他、補足情報があれば記載してください。
+    validations:
+      required: false
